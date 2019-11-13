@@ -118,7 +118,7 @@ class Comunicator:
                     if(listOfServers[0][1] <= self.prioridad) :#Checamos si tenemos la prioridad mas alta
                         #De ser asi, ganamos y mandamos un mensaje de victoria a todos los demas
                         self.BanderaVictoria=True
-                        self.bserver.sendto("VICT" + HOST, (BroadcastAdress, 37020))
+                        self.bserver.sendto(b"VICT" + HOST, (BroadcastAdress, 37020))
                         WaitForVictAcc()
                         """data2, addr2 = self.bclient.recvfrom(1024)
                         victRes = data.decode('utf-8').split()
@@ -138,6 +138,7 @@ class Comunicator:
                     self.MasterStatus= False
                     self.ElectionStatus= False
                     #self.RunListenThread.start()
+                    self.RunMasterSerThread.start()
                     #self.listenBCKThread.start()
                     #self.turnOnBackUpThread.start()
                     #self.listenTimeThread.start()
@@ -148,7 +149,10 @@ class Comunicator:
                 self.backupEnable= False
                 self.MasterStatus= True
                 self.ElectionStatus= False
-            
+                StringtoSend = "VICT" + HOST
+                StringtoSend.encode('utf-8')
+                self.bserver.sendto(StringtoSend.encode('utf-8'), (BroadcastAdress, 37020))
+                self.RunMasterSerThread.start()
     
     def WaitForVictAcc():
         global listOfServers
@@ -174,7 +178,8 @@ class Comunicator:
         if (listOfServers[0][1] > self.prioridad):
             for i in range(0,len(listOfServers)):
                 if(listOfServers[i][1]< self.prioridad) :
-                    ElectionSock.sendto(b"SerBigPri"+str(self.prioridad),(listOfServers[i][0], ELECTIONPORT))
+                    StringtoSend="SerBigPri" + str(self.prioridad)
+                    ElectionSock.sendto(StringtoSend.encode('utf-8'),(listOfServers[i][0], ELECTIONPORT))
         electRes, electAddr = self.bclient.recvfrom(1024)
         electRes = data.decode('utf-8').split()
         #if ():
@@ -266,7 +271,7 @@ class Comunicator:
         prom = 0 
         global listOfServers
         if(len(listOfServers) > 0):
-            for x in range(len(listOfServers)):
+            for x in range(0,len(listOfServers)):
                 print("[%s , %d]" % (listOfServers[x][0] , PORT) )
                 sock.sendto(b'GTM',(listOfServers[x][0], PORT))
                 data , addr = sock.recvfrom(100)
@@ -279,13 +284,13 @@ class Comunicator:
         sqlformula = "INSERT INTO Tiempo (hora) VALUES(\"%s\")"
         mycursor.execute(sqlformula,(hora,))
         mydb.commit()
-        for x in range(len(listOfServers)):
+        for x in range(0,len(listOfServers)):
             #print(()x , PORT)
             sock.sendto(MSG.encode('utf-8'),(listOfServers[x][0],PORT))
 		
 
     def TimeThread(self):
-        if(self.MasterStatus == True) :
+        while(self.MasterStatus == True) :
             
             sock = socket.socket(socket.AF_INET , socket.SOCK_DGRAM)
             sock.bind((HOST,TIMEPORT))
